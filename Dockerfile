@@ -24,7 +24,7 @@ WORKDIR /app
 COPY --from=builder /app/target/maven-java-app-1.0.0.jar app.jar
 
 # Create a non-root user for security
-RUN useradd -m -u 1000 appuser && chown appuser:appuser /app
+RUN useradd -m -u 1500 appuser && chown appuser:appuser /app
 USER appuser
 
 # Expose port for Spring Boot application
