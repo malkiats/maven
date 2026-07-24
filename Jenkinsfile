@@ -79,7 +79,7 @@ pipeline {
                 script {
                     echo '========== Stage 5: Building Docker Image =========='
                     sh '''
-                        docker build -t ${APP_NAME}:${IMAGE_TAG} .
+                        docker build --no-cache -t ${APP_NAME}:${IMAGE_TAG} .
                         docker tag ${APP_NAME}:${IMAGE_TAG} ${DOCKER_REGISTRY}/${HARBOR_PROJECT}/${APP_NAME}:${IMAGE_TAG}
                         docker tag ${APP_NAME}:${IMAGE_TAG} ${DOCKER_REGISTRY}/${HARBOR_PROJECT}/${APP_NAME}:latest
                         docker images | grep ${APP_NAME}
@@ -110,12 +110,17 @@ pipeline {
                     echo '========== Stage 7: Deploying to Kubernetes =========='
                     sh '''
                         echo "Creating Kubernetes namespace..."
-                        kubectl create namespace ${K8S_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
+                        kubectl create namespace ${K8S_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f - 2>/dev/null || true
                         
-                        echo "Creating deployment..."
+                        echo "Applying deployment manifest..."
+                        kubectl apply -f k8s-deployment.yaml
+                        
+                        sleep 3
+                        
+                        echo "Updating deployment image..."
                         kubectl set image deployment/${K8S_DEPLOYMENT} \
                             ${K8S_DEPLOYMENT}=${DOCKER_REGISTRY}/${HARBOR_PROJECT}/${APP_NAME}:${IMAGE_TAG} \
-                            -n ${K8S_NAMESPACE} --record || true
+                            -n ${K8S_NAMESPACE} || true
                         
                         echo "Checking deployment status..."
                         kubectl rollout status deployment/${K8S_DEPLOYMENT} -n ${K8S_NAMESPACE} --timeout=5m || true
