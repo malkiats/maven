@@ -1,0 +1,108 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: java-apps
+  labels:
+    name: java-apps
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: maven-java-app
+  namespace: java-apps
+  labels:
+    app: maven-java-app
+    version: v1
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: maven-java-app
+  template:
+    metadata:
+      labels:
+        app: maven-java-app
+        version: v1
+    spec:
+      containers:
+      - name: maven-java-app
+        image: 192.168.101.11/java-app/maven-java-app:latest
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        env:
+        - name: JAVA_OPTS
+          value: "-Xms128m -Xmx256m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: maven-java-app-service
+  namespace: java-apps
+  labels:
+    app: maven-java-app
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 8080
+  selector:
+    app: maven-java-app
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: maven-java-app-hpa
+  namespace: java-apps
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: maven-java-app
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
