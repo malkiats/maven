@@ -16,7 +16,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Stage 2: Runtime Stage
-FROM docker.io/library/openjdk:11-jre-slim
+FROM docker.io/eclipse-temurin:11-jre
 
 WORKDIR /app
 
