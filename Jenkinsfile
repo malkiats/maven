@@ -13,7 +13,7 @@ pipeline {
         
         // GitHub
         GIT_REPO = 'https://github.com/malkiats/maven.git'
-        GIT_BRANCH = 'main'
+        GIT_BRANCH = 'master'
         
         // Kubernetes
         K8S_NAMESPACE = 'java-apps'
