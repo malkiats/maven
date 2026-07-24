@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile for Maven Java Application
 
 # Stage 1: Build Stage
-FROM maven:3.8.1-openjdk-11 AS builder
+FROM docker.io/library/maven:3.8.1-openjdk-11 AS builder
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Stage 2: Runtime Stage
-FROM openjdk:11-jre-slim
+FROM docker.io/library/openjdk:11-jre-slim
 
 WORKDIR /app
 
