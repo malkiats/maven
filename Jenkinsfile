@@ -18,7 +18,7 @@ pipeline {
         // Kubernetes
         K8S_NAMESPACE = 'java-apps'
         K8S_DEPLOYMENT = 'maven-java-app'
-        KUBECONFIG = '/home/jenkins/.kube/config'
+        KUBECONFIG = '/var/lib/jenkins/.kube/config'
     }
     
     options {
