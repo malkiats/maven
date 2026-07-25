@@ -29,6 +29,8 @@ spec:
         app: maven-java-app
         version: v1
     spec:
+      imagePullSecrets:
+      - name: harbor-secret
       containers:
       - name: maven-java-app
         image: 192.168.101.11/java-app/maven-java-app:latest
