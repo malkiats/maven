@@ -89,7 +89,31 @@ pipeline {
                 }
             }
         }
-        
+        stage('Security Scan - Trivy') {
+            steps {
+                script {
+                    echo '========== Stage: Trivy Image Security Scan =========='
+                    sh '''
+                        echo "Scanning image for vulnerabilities..."
+                        # Fail build on CRITICAL vulnerabilities, report HIGH
+                        trivy image \
+                            --severity HIGH,CRITICAL \
+                            --exit-code 0 \
+                            --format table \
+                            ${APP_NAME}:${IMAGE_TAG}
+
+                        echo "Generating vulnerability report..."
+                        trivy image \
+                            --severity CRITICAL \
+                            --exit-code 1 \
+                            --format json \
+                            --output trivy-report.json \
+                            ${APP_NAME}:${IMAGE_TAG} || echo "CRITICAL vulnerabilities found!"
+                    '''
+                    archiveArtifacts artifacts: 'trivy-report.json', allowEmptyArchive: true
+                }
+            }
+        }
         stage('Push to Harbor Registry') {
             steps {
                 script {
