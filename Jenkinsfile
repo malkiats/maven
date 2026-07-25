@@ -94,21 +94,28 @@ pipeline {
                 script {
                     echo '========== Stage: Trivy Image Security Scan =========='
                     sh '''
+                        echo "Exporting image to tar for scanning (rootless Podman)..."
+                        docker save ${APP_NAME}:${IMAGE_TAG} -o ${APP_NAME}-${IMAGE_TAG}.tar
+
                         echo "Scanning image for vulnerabilities..."
-                        # Fail build on CRITICAL vulnerabilities, report HIGH
+                        # Report HIGH and CRITICAL findings (report-only)
                         trivy image \
+                            --input ${APP_NAME}-${IMAGE_TAG}.tar \
                             --severity HIGH,CRITICAL \
                             --exit-code 0 \
-                            --format table \
-                            ${APP_NAME}:${IMAGE_TAG}
+                            --format table
 
                         echo "Generating vulnerability report..."
                         trivy image \
+                            --input ${APP_NAME}-${IMAGE_TAG}.tar \
                             --severity CRITICAL \
-                            --exit-code 1 \
+                            --exit-code 0 \
                             --format json \
-                            --output trivy-report.json \
-                            ${APP_NAME}:${IMAGE_TAG} || echo "CRITICAL vulnerabilities found!"
+                            --output trivy-report.json
+
+                        echo "Cleaning up image tar..."
+                        rm -f ${APP_NAME}-${IMAGE_TAG}.tar
+                        echo "✓ Trivy scan completed"
                     '''
                     archiveArtifacts artifacts: 'trivy-report.json', allowEmptyArchive: true
                 }
