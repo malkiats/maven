@@ -113,8 +113,7 @@ pipeline {
                         kubectl --insecure-skip-tls-verify create namespace ${K8S_NAMESPACE} --dry-run=client -o yaml | kubectl --insecure-skip-tls-verify apply -f - 2>/dev/null || true
                         
                         echo "Applying deployment manifest..."
-                        kubectl --insecure-skip-tls-verify apply -f k8s-deployment.yaml
-                        
+                kubectl --insecure-skip-tls-verify apply -f k8s-deployment.yaml --validate=false
                         sleep 3
                         
                         echo "Updating deployment image..."
