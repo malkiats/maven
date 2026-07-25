@@ -18,6 +18,7 @@ pipeline {
         // Kubernetes
         K8S_NAMESPACE = 'java-apps'
         K8S_DEPLOYMENT = 'maven-java-app'
+        KUBECONFIG = '/home/jenkins/.kube/config'
     }
     
     options {
@@ -109,11 +110,21 @@ pipeline {
                 script {
                     echo '========== Stage 7: Deploying to Kubernetes =========='
                     sh '''
+                        echo "Checking kubeconfig..."
+                        if [ ! -f ${KUBECONFIG} ]; then
+                            echo "ERROR: kubeconfig not found at ${KUBECONFIG}"
+                            echo "Attempting to use default kubeconfig..."
+                            export KUBECONFIG=~/.kube/config
+                        fi
+                        
+                        echo "Testing kubectl access..."
+                        kubectl --insecure-skip-tls-verify cluster-info || true
+                        
                         echo "Creating Kubernetes namespace..."
                         kubectl --insecure-skip-tls-verify create namespace ${K8S_NAMESPACE} --dry-run=client -o yaml | kubectl --insecure-skip-tls-verify apply -f - 2>/dev/null || true
                         
                         echo "Applying deployment manifest..."
-                kubectl --insecure-skip-tls-verify apply -f k8s-deployment.yaml --validate=false
+                        kubectl --insecure-skip-tls-verify apply -f k8s-deployment.yaml --validate=false
                         sleep 3
                         
                         echo "Updating deployment image..."
